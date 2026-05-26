@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import google.generativeai as genai
+import os
 
 # --- MOBILE APP CONFIGURATION ---
 st.set_page_config(page_title="Pro Wealth AI", page_icon="🏦", layout="centered")
@@ -24,19 +25,14 @@ st.markdown("*Advanced SIP Analytics & Autonomous Financial Advisor*")
 st.write("---")
 
 # --- API KEY MANAGEMENT ---
-import os
-
-# First, check if the key is hidden safely in the Streamlit Secrets panel
 backend_key = st.secrets.get("GEMINI_API_KEY")
-
-# If it's in secrets, use it automatically. If not, show a text input box on the screen.
 api_key = backend_key or st.text_input("🔑 Enter Free Gemini API Key to activate AI Coach:", type="password")
 
 if api_key:
     genai.configure(api_key=api_key)
+    os.environ["FORCE_GEMINI_API_VERSION"] = "v1"
 else:
     st.info("💡 To talk to your AI Advisor, generate a free key at aistudio.google.com and paste it above.")
-
 
 # --- APP TABS ---
 tab1, tab2, tab3 = st.tabs(["📊 Calculator", "🤖 Talk to AI Coach", "📑 Data Sheet"])
@@ -81,7 +77,6 @@ with tab1:
 
     df = pd.DataFrame(data_log)
 
-    # --- SAFETY GATE FOR INITIALIZATION ---
     if df.empty:
         st.warning("Awaiting configuration parameters to calculate metrics...")
     else:
@@ -98,7 +93,7 @@ with tab1:
             st.metric("Wealth Multiplier", f"{round(final['Future Value'] / final['Total Invested'], 2)}x")
 
         # --- GRAPH ---
-        st.write("### 💹 Growth Trajectory")
+        st.write("### 2026 Growth Trajectory")
         fig = px.area(df, x="Year", y=["Total Invested", "Future Value"], 
                       labels={"value": "Amount ($)", "variable": "Type"},
                       color_discrete_sequence=["#FF4B4B", "#00D4B2"])
@@ -140,8 +135,11 @@ with tab2:
             if user_question:
                 with st.spinner("Analyzing market dynamics and portfolio metrics..."):
                     try:
-                        model = genai.GenerativeModel('gemini-1.5-flash-latest')
-
+                        # Explicit v1 routing engine configuration
+                        model = genai.GenerativeModel(
+                            model_name='gemini-1.5-flash',
+                            client_options=genai.api_client.ClientOptions(api_version="v1")
+                        )
                         full_prompt = f"{system_instruction}\n\nContext on User's Math:\n{context}\n\nUser Question: {user_question}"
                         response = model.generate_content(full_prompt)
                         st.markdown(f"### 💡 Coach Response:\n{response.text}")
