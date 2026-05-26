@@ -108,8 +108,8 @@ with tab2:
                     
                     full_prompt = f"{system_instruction}\n\nInvestment Metrics:\n{context}\n\nUser Question: {user_question}"
                     
-                    # --- DIRECT GOOGLE API CALL ---
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    # --- DIRECT GOOGLE API CALL WITH UPDATED MODEL ---
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
                     headers = {'Content-Type': 'application/json'}
                     payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
                     
