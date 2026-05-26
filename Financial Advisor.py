@@ -24,12 +24,19 @@ st.markdown("*Advanced SIP Analytics & Autonomous Financial Advisor*")
 st.write("---")
 
 # --- API KEY MANAGEMENT ---
-api_key = st.text_input("🔑 Enter Free Gemini API Key to activate AI Coach:", type="password")
+import os
+
+# First, check if the key is hidden safely in the Streamlit Secrets panel
+backend_key = st.secrets.get("GEMINI_API_KEY")
+
+# If it's in secrets, use it automatically. If not, show a text input box on the screen.
+api_key = backend_key or st.text_input("🔑 Enter Free Gemini API Key to activate AI Coach:", type="password")
 
 if api_key:
     genai.configure(api_key=api_key)
 else:
     st.info("💡 To talk to your AI Advisor, generate a free key at aistudio.google.com and paste it above.")
+
 
 # --- APP TABS ---
 tab1, tab2, tab3 = st.tabs(["📊 Calculator", "🤖 Talk to AI Coach", "📑 Data Sheet"])
