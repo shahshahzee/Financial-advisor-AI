@@ -95,4 +95,43 @@ with tab2:
                 with st.spinner("Connecting directly to Google Servers..."):
                     
                     system_instruction = "You are an elite, highly professional wealth advisor and portfolio manager."
-                    context = f"Initial SIP: ${base_sip}. Increment: ${topup_amount} ({topup_frequency}). Horizon: {years} years. ROI: {annual_rate}%. Total Invested: ${
+                    
+                    # Broken into smaller lines to prevent mobile copy-paste truncation errors
+                    context = (
+                        f"Initial SIP: ${base_sip}. "
+                        f"Increment: ${topup_amount} ({topup_frequency}). "
+                        f"Horizon: {years} years. "
+                        f"ROI: {annual_rate}%. "
+                        f"Total Invested: ${final['Total Invested']:,.2f}. "
+                        f"Future Value: ${final['Future Value']:,.2f}."
+                    )
+                    
+                    full_prompt = f"{system_instruction}\n\nInvestment Metrics:\n{context}\n\nUser Question: {user_question}"
+                    
+                    # --- DIRECT GOOGLE API CALL ---
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    headers = {'Content-Type': 'application/json'}
+                    payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
+                    
+                    try:
+                        response = requests.post(url, headers=headers, json=payload)
+                        
+                        if response.status_code == 200:
+                            # Success! Parse and show the AI response
+                            data = response.json()
+                            answer = data['candidates'][0]['content']['parts'][0]['text']
+                            st.markdown(f"### 💡 Coach Response:\n{answer}")
+                        else:
+                            # Failure! Print the EXACT error from Google
+                            st.error(f"🚨 Google Server Rejected the Request. (Error Code: {response.status_code})")
+                            st.code(response.text, language="json")
+                            
+                    except Exception as e:
+                        st.error(f"Critical Network Error: {str(e)}")
+
+with tab3:
+    st.subheader("📑 Audit Statement")
+    st.dataframe(df.style.format({
+        "Monthly SIP": "${:,.2f}", "Total Invested": "${:,.2f}", 
+        "Future Value": "${:,.2f}", "Profit Gained": "${:,.2f}", "Absolute ROI (%)": "{:.2f}%"
+    }))
