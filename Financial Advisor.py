@@ -24,7 +24,6 @@ st.markdown("*Advanced SIP Analytics & Autonomous Financial Advisor*")
 st.write("---")
 
 # --- API KEY MANAGEMENT ---
-# Users can securely paste their free Gemini API key here
 api_key = st.text_input("🔑 Enter Free Gemini API Key to activate AI Coach:", type="password")
 
 if api_key:
@@ -38,7 +37,6 @@ tab1, tab2, tab3 = st.tabs(["📊 Calculator", "🤖 Talk to AI Coach", "📑 Da
 with tab1:
     st.subheader("📥 Investment Setup")
     
-    # Grid layout for mobile-friendly inputs
     col_a, col_b = st.columns(2)
     with col_a:
         base_sip = st.number_input("Starting Monthly SIP", min_value=1000, value=50000, step=5000)
@@ -51,7 +49,7 @@ with tab1:
 
     # --- MATH CALCULATIONS ---
     freq_map = {"Monthly": 1, "Quarterly": 3, "Mid-Year": 6, "Annual": 12}
-    topup_interval = freq_map[topup_frequency]
+    topup_interval = freq_map.get(topup_frequency, 12)
     months = years * 12
     monthly_rate = annual_rate / 12 / 100
 
@@ -75,35 +73,41 @@ with tab1:
         })
 
     df = pd.DataFrame(data_log)
-    final = df.iloc[-1]
 
-    # --- KPI DASHBOARD ---
-    st.write("### 📈 Key Performance Indicators")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.metric("Total Capital Invested", f"${final['Total Invested']:,.2f}")
-        st.metric("Absolute ROI", f"{final['Absolute ROI (%)']:.2f}%")
-    with c2:
-        st.metric("Maturity Wealth", f"${final['Future Value']:,.2f}")
-        st.metric("Wealth Multiplier", f"{round(final['Future Value'] / final['Total Invested'], 2)}x")
+    # --- SAFETY GATE FOR INITIALIZATION ---
+    if df.empty:
+        st.warning("Awaiting configuration parameters to calculate metrics...")
+    else:
+        final = df.iloc[-1]
 
-    # --- GRAPH ---
-    st.write("### 💹 Growth Trajectory")
-    fig = px.area(df, x="Year", y=["Total Invested", "Future Value"], 
-                  labels={"value": "Amount ($)", "variable": "Type"},
-                  color_discrete_sequence=["#FF4B4B", "#00D4B2"])
-    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
-    st.plotly_chart(fig, use_container_width=True)
+        # --- KPI DASHBOARD ---
+        st.write("### 📈 Key Performance Indicators")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("Total Capital Invested", f"${final['Total Invested']:,.2f}")
+            st.metric("Absolute ROI", f"{final['Absolute ROI (%)']:.2f}%")
+        with c2:
+            st.metric("Maturity Wealth", f"${final['Future Value']:,.2f}")
+            st.metric("Wealth Multiplier", f"{round(final['Future Value'] / final['Total Invested'], 2)}x")
+
+        # --- GRAPH ---
+        st.write("### 💹 Growth Trajectory")
+        fig = px.area(df, x="Year", y=["Total Invested", "Future Value"], 
+                      labels={"value": "Amount ($)", "variable": "Type"},
+                      color_discrete_sequence=["#FF4B4B", "#00D4B2"])
+        fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        st.plotly_chart(fig, use_container_width=True)
 
 with tab2:
     st.subheader("🤖 Live AI Financial Consultation")
     
     if not api_key:
         st.warning("Please activate your AI Brain by putting your API key in the input box at the top.")
+    elif df.empty:
+        st.info("Calculate metrics on the first tab before starting an AI session.")
     else:
         st.write("The AI Coach automatically analyzes your calculator metrics.")
         
-        # System instructions to shape the AI persona perfectly
         system_instruction = """
         You are an elite, highly professional financial advisor, portfolio manager, and wealth coach. 
         You speak with precision, wisdom, and strategic depth. You analyze the user's investment metrics,
@@ -111,7 +115,7 @@ with tab2:
         clarity on asset allocation, inflation protection, and wealth accumulation milestones.
         """
         
-        # Inject current data directly into the AI's short-term memory (Context injection)
+        final = df.iloc[-1]
         context = f"""
         Current Investment Profile Data:
         - Initial Monthly SIP: ${base_sip}
@@ -123,7 +127,7 @@ with tab2:
         - Net Profit Gained: ${final['Profit Gained']:,.2f}
         """
         
-        user_question = st.text_input("Ask your Financial Coach anything (e.g., 'Analyze my portfolio risk', 'How do I beat inflation?'):")
+        user_question = st.text_input("Ask your Financial Coach anything:")
         
         if st.button("Consult Coach"):
             if user_question:
@@ -138,7 +142,10 @@ with tab2:
 
 with tab3:
     st.subheader("📑 Audit Statement")
-    st.dataframe(df.style.format({
-        "Monthly SIP": "${:,.2f}", "Total Invested": "${:,.2f}", 
-        "Future Value": "${:,.2f}", "Profit Gained": "${:,.2f}", "Absolute ROI (%)": "{:.2f}%"
-    }))
+    if df.empty:
+        st.info("No statement entries available.")
+    else:
+        st.dataframe(df.style.format({
+            "Monthly SIP": "${:,.2f}", "Total Invested": "${:,.2f}", 
+            "Future Value": "${:,.2f}", "Profit Gained": "${:,.2f}", "Absolute ROI (%)": "{:.2f}%"
+        }))
