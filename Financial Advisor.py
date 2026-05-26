@@ -140,7 +140,8 @@ with tab2:
             if user_question:
                 with st.spinner("Analyzing market dynamics and portfolio metrics..."):
                     try:
-                        model = genai.GenerativeModel('models/gemini-1.5-flash')
+                        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+
                         full_prompt = f"{system_instruction}\n\nContext on User's Math:\n{context}\n\nUser Question: {user_question}"
                         response = model.generate_content(full_prompt)
                         st.markdown(f"### 💡 Coach Response:\n{response.text}")
