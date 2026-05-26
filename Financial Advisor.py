@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import requests
-import json
 
 # --- MOBILE APP CONFIGURATION ---
 st.set_page_config(page_title="Pro Wealth AI", page_icon="🏦", layout="centered")
@@ -93,37 +92,7 @@ with tab2:
         
         if st.button("Consult Coach"):
             if user_question:
-                with st.spinner("Analyzing parameters via global regional proxy..."):
+                with st.spinner("Connecting directly to Google Servers..."):
                     
-                    system_instruction = "You are an elite, highly professional wealth advisor and portfolio manager. Speak with tactical depth, precision, and financial wisdom."
-                    context = f"Initial Monthly SIP: ${base_sip}. Top-up Increment: ${topup_amount} occurring {topup_frequency}. Horizon: {years} years. Expected Target ROI: {annual_rate}%. Total Invested Capital: ${final['Total Invested']:,.2f}. Expected Maturity Wealth: ${final['Future Value']:,.2f}."
-                    full_prompt = f"{system_instruction}\n\nInvestment Metrics:\n{context}\n\nUser Question: {user_question}"
-                    
-                    # --- PROXY API GATEWAY ROUTING ---
-                    # Uses an open proxy engine to route requests away from locked data center IPs
-                    base_url = "https://api.allorigins.win/get?url="
-                    target_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-                    
-                    payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
-                    
-                    try:
-                        # Pack request into a proxy payload
-                        response = requests.post(
-                            base_url + requests.utils.quote(target_url),
-                            json=payload
-                        )
-                        wrapper_json = response.json()
-                        response_data = json.loads(wrapper_json['contents'])
-                        
-                        # Parse out text output dynamically
-                        answer = response_data['candidates'][0]['content']['parts'][0]['text']
-                        st.markdown(f"### 💡 Coach Response:\n{answer}")
-                    except Exception as e:
-                        st.error("The cloud platform data center IP range is restricted by Google. Try pasting your key manually into the password box above to overwrite the background network path.")
-
-with tab3:
-    st.subheader("📑 Audit Statement")
-    st.dataframe(df.style.format({
-        "Monthly SIP": "${:,.2f}", "Total Invested": "${:,.2f}", 
-        "Future Value": "${:,.2f}", "Profit Gained": "${:,.2f}", "Absolute ROI (%)": "{:.2f}%"
-    }))
+                    system_instruction = "You are an elite, highly professional wealth advisor and portfolio manager."
+                    context = f"Initial SIP: ${base_sip}. Increment: ${topup_amount} ({topup_frequency}). Horizon: {years} years. ROI: {annual_rate}%. Total Invested: ${
